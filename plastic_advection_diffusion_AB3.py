@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+import plotly.express as px
 eps = np.finfo(float).eps
 
 def upwind_adveciton_diffusion_AB3(sink=True, save=False):
@@ -7,7 +10,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
     sum_C = []
 
     # Basic model parameters
-    h = 50.                           # Depth [m]
+    h = 100.                           # Depth [m]
     K = 1.e-2                         # Diffusivity [m2/s]  
     w = 1.e-4                         # Vertical velocity [m/s]
 
@@ -18,12 +21,12 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
         wr   =  - 0.00085             # rise velocity for HDPE (in regard to the Z axis) [m/s]
         mode = 'float'  
 
-    Nz = 500                          # Number of vertical points
+    Nz = 1000                          # Number of vertical points
     dz = h/Nz                         # Space between two points
     z  = np.linspace(0,h, Nz+1)       # List of depth
-    T  = 2000                         # Simulation time 
+    T  = 3600                         # Simulation time 
 
-    dt = 0.1 * np.min([dz/np.abs(w+eps), (dz/np.abs(wr+eps)), (dz**2)/(2*K+eps)])   # time between two iterations [s] Rem: dt < min(1/2*(dz**2)/K, 1/f)
+    dt = 0.5 * np.min([dz/np.abs(w+eps), (dz/np.abs(wr+eps)), (dz**2)/(2*K+eps)])   # time between two iterations [s] Rem: dt < min(1/2*(dz**2)/K, 1/f)
     Nt  = int(10*np.ceil(T/(10*dt)))  # number of time steps
 
     print('\n-- AB3 --')
@@ -43,6 +46,10 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
     ax.plot(C, -1*z, 'r')
     print('C_0 = ' + str(C.sum()))
 
+    # Store all values for countour plot
+    C_all_sol = pd.DataFrame(index=range(Nt+1),columns=range(Nz+1))
+    C_all_sol.iloc[0] = C
+
     # Loop in time
     for k in range(1, Nt+1):
         # Update solution for t-1 and t-2
@@ -51,12 +58,12 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
         for i in range(1, Nz-1):
             if i <= 3:
                 #print(1)
-                w  = 0 
+                w  = 0  
                 wr = 0
                 if w + wr >= 0 :
-                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (wr/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
+                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
                 else:
-                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (wr/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
+                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
             else:
                 #print(2)
                 if w + wr >= 0 :
@@ -82,6 +89,11 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
             all_C.append(C)
             sum_C.append(C.sum())
 
+        # Store all solutions
+        C_all_sol.iloc[k] = C
+
+    print(C_all_sol)
+
     # Display result
     plt.grid(linestyle=':')
     plt.gca().spines['right'].set_visible(False)
@@ -93,6 +105,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
 
     if save==True:
         plt.savefig('./image_AB3/AB3_upwind_1D_' + mode + '.svg', format='svg', dpi=500)
+        plt.savefig('./image_AB3/AB3_upwind_1D_' + mode + '.png', format='png', dpi=500)
 
     plt.show()
 
