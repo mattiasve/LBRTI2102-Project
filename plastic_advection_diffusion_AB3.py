@@ -10,7 +10,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
     sum_C = []
 
     # Basic model parameters
-    h = 100.                           # Depth [m]
+    h = 300.                           # Depth [m]
     K = 1.e-2                         # Diffusivity [m2/s]  
     w = 1.e-4                         # Vertical velocity [m/s]
 
@@ -21,10 +21,10 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
         wr   =  - 0.00085             # rise velocity for HDPE (in regard to the Z axis) [m/s]
         mode = 'float'  
 
-    Nz = 1000                          # Number of vertical points
+    Nz = 150                          # Number of vertical points
     dz = h/Nz                         # Space between two points
     z  = np.linspace(0,h, Nz+1)       # List of depth
-    T  = 3600                         # Simulation time 
+    T  = 3600*24                         # Simulation time 
 
     dt = 0.5 * np.min([dz/np.abs(w+eps), (dz/np.abs(wr+eps)), (dz**2)/(2*K+eps)])   # time between two iterations [s] Rem: dt < min(1/2*(dz**2)/K, 1/f)
     Nt  = int(10*np.ceil(T/(10*dt)))  # number of time steps
@@ -43,12 +43,8 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
     r1  = np.zeros_like(C)
     r2  = np.zeros_like(C)
 
-    ax.plot(C, -1*z, 'r')
+    #ax.plot(C, -1*z, 'r')
     print('C_0 = ' + str(C.sum()))
-
-    # Store all values for countour plot
-    C_all_sol = pd.DataFrame(index=range(Nt+1),columns=range(Nz+1))
-    C_all_sol.iloc[0] = C
 
     # Loop in time
     for k in range(1, Nt+1):
@@ -56,14 +52,14 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
         r2 = r1 ; r1 =r0
         # Loop in space
         for i in range(1, Nz-1):
-            if i <= 3:
+            if i <= 5:
                 #print(1)
-                w  = 0  
-                wr = 0
+                #w  = 0  
+                #wr = 0
                 if w + wr >= 0 :
-                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
+                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) #- (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
                 else:
-                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
+                    r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) #- (w/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
             else:
                 #print(2)
                 if w + wr >= 0 :
@@ -80,7 +76,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
             C = C + dt*((23/12)*r0 - (16/12)*r1 + (5/12)*r2)
 
         # Boundary condtition : no flux in/out domain
-        C[0]  = C[1]
+        C[0]  = 0 #C[1]
         C[-1] = C[-2]
         # Plot the solution
         if np.remainder(k, Nt/10) == 0:
@@ -90,9 +86,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
             sum_C.append(C.sum())
 
         # Store all solutions
-        C_all_sol.iloc[k] = C
-
-    print(C_all_sol)
+        #C_all_sol.append(C)
 
     # Display result
     plt.grid(linestyle=':')
