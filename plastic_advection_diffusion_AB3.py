@@ -6,11 +6,9 @@ import plotly.express as px
 eps = np.finfo(float).eps
 
 def upwind_adveciton_diffusion_AB3(sink=True, save=False):
-    all_C = []
-    sum_C = []
 
     # Basic model parameters
-    h = 300.                           # Depth [m]
+    h = 300.                          # Depth [m]
     K = 1.e-2                         # Diffusivity [m2/s]  
     w = 1.e-4                         # Vertical velocity [m/s]
 
@@ -24,7 +22,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
     Nz = 150                          # Number of vertical points
     dz = h/Nz                         # Space between two points
     z  = np.linspace(0,h, Nz+1)       # List of depth
-    T  = 3600*24                         # Simulation time 
+    T  = 3600*24                      # Simulation time 
 
     dt = 0.5 * np.min([dz/np.abs(w+eps), (dz/np.abs(wr+eps)), (dz**2)/(2*K+eps)])   # time between two iterations [s] Rem: dt < min(1/2*(dz**2)/K, 1/f)
     Nt  = int(10*np.ceil(T/(10*dt)))  # number of time steps
@@ -52,10 +50,8 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
         r2 = r1 ; r1 =r0
         # Loop in space
         for i in range(1, Nz-1):
-            if i <= 5:
+            if i <= 3:
                 #print(1)
-                #w  = 0  
-                #wr = 0
                 if w + wr >= 0 :
                     r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) #- (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
                 else:
@@ -65,6 +61,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
                 if w + wr >= 0 :
                     r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
                 else:
+                    #print(3)
                     r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
 
         # Update C
@@ -81,12 +78,7 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
         # Plot the solution
         if np.remainder(k, Nt/10) == 0:
             ax.plot(C, -1*z)
-            print(C.sum())
-            all_C.append(C)
-            sum_C.append(C.sum())
-
-        # Store all solutions
-        #C_all_sol.append(C)
+            print(C.sum())     #check if solution is conservative
 
     # Display result
     plt.grid(linestyle=':')
@@ -103,11 +95,10 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
 
     plt.show()
 
-    return all_C, sum_C, z
 
 # Simulation for negative buoyancy plastic
-sink_cc, sink_sum, depth   = upwind_adveciton_diffusion_AB3(sink=True, save=True)
+upwind_adveciton_diffusion_AB3(sink=True, save=True)
 
 # Simulation for positive buoyancy plastic
-float_cc, float_sum, depth = upwind_adveciton_diffusion_AB3(sink=False, save=True)
+upwind_adveciton_diffusion_AB3(sink=False, save=True)
 
