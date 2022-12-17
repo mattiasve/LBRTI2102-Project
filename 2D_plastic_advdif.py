@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 
 def advdif_AB3_2D(sink=True, save=False):
 	''' Solves a 2D advection-diffusion equation
-		using an Adam_bashforth 3rd oder sheme
+		using an Adam_bashforth 3rd oder scheme
 		on the domain [0,L]x[0,L]
 
 		Based on the advection_diffusion_AB3.m script
-		writen by E.Hanert for the LBRTI2102 course
+		written by E.Hanert for the LBRTI2102 course
 	''' 
 
 	#########################
@@ -19,18 +19,19 @@ def advdif_AB3_2D(sink=True, save=False):
 			L     = domain length
 			Nx,Ny = Nbr of elements along the x/z axis
 		'''
-		x,y = np.meshgrid(np.linspace(0,L+1, Nx//L), np.linspace(0,L+1, Nz//L), indexing='ij')
+		x,y = np.meshgrid(np.linspace(0,L, Nx), np.linspace(0,L, Nz), indexing='ij')
 		return x,y
 
 	def get_advection_velocity_Z(U0, H):
 		''' Computes the advection velocity on the XY plane using the hypothesis
 			that advection decreases linearly with depth Z
+		U0 = horinzontal velocity at the surface [m/s]
+		H  = depth [m]
 
 		Return a vector containing an advection velocity value for each node
 		'''
 
-		Z = np.linspace(0,L, Nz//L)
-		print(Z)
+		Z = np.linspace(0,L, Nz)
 		u = U0 - Z/H 
 		u[u<0] = 0
 		return u
@@ -69,11 +70,11 @@ def advdif_AB3_2D(sink=True, save=False):
 		wr = - 0.00085     # rise velocity for HDPE (in regard to the Z axis) [m/s]
 		mode = 'float'
 
-	Ny = 50                # number of elements along x (=> Nx+1 nodes)
-	Nz = 50                # number of elements along y (=> Ny+1 nodes)
+	Ny = 10                # number of elements along x (=> Nx+1 nodes)
+	Nz = 10                # number of elements along y (=> Ny+1 nodes)
 	Dy = L/Ny              # grid size along x
 	Dz = L/Nz              # grid size along y
-	T  = 100               # integration time
+	T  = 1000               # integration time
 	dt = 0.1 * min([Dy/Us,(Dy**2)/(2*Kh),Dz/Us,(Dz**2)/(2*Kv)])
 	Nt = int(10*np.ceil(T/(10*dt)))  # number of timesteps
 
@@ -83,7 +84,7 @@ def advdif_AB3_2D(sink=True, save=False):
 	y,z = get_grid(L, Ny, Nz)                 # grid nodes coordinates
 	u   = get_advection_velocity_Z(U0, L)     # advection velocity for each depth layer
 	C  = get_initial_conditions(y,z)
-	print(u)
+	#print(u)
 	# print('\n')
 	# print(C)
 	# print('\n')
@@ -109,9 +110,9 @@ def advdif_AB3_2D(sink=True, save=False):
 		r2=r1 ; r1=r0
 
 		# Loop in space (y)
-		for i in range(Ny+1): #si pas de BC à droite: range(1, Ny)?? 
+		for i in range(Ny): #si pas de BC à droite: range(1, Ny)?? 
 			# Loop in space (z)
-			for j in range(Nz+1):
+			for j in range(Nz):
 				Cij = C[j][i] # first get depth j then get value on Y axis
 				uz = u[j]
 				# Values around Cij + boundary conditons : No flux in/out domain
@@ -120,7 +121,7 @@ def advdif_AB3_2D(sink=True, save=False):
 				else:
 					Cl = Cij
 
-				if i < Ny:
+				if i < Ny-1:
 					Cr = C[j][i+1]  # right value
 				else: 
 					Cr = Cij
@@ -130,7 +131,7 @@ def advdif_AB3_2D(sink=True, save=False):
 				else:
 					Cd = Cij
 
-				if j < Nz:
+				if j < Nz-1:
 					Cu = C[j+1][i]  # "up" value
 				else:
 					Cu = Cij
@@ -160,8 +161,11 @@ def advdif_AB3_2D(sink=True, save=False):
 
 		# Plot solution
 		if np.remainder(k, Nt/10) == 0:
+			snapshot = k*10//Nt
+			print(snapshot)
 			plt.figure()
 			plt.contourf(y,-1*z,C)
+			plt.savefig('./images_AB3_2D/'+str(snapshot)+'.png')
 			plt.show()
 
 
