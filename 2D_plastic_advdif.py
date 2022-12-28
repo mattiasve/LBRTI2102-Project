@@ -32,7 +32,7 @@ def advdif_AB3_2D(sink=True, save=False):
 		Return a vector containing an advection velocity value for each node
 		'''
 		v = U0 - z/H
-		w = (U0 - z/H)*1e-2
+		w = (U0 - z/H)*1e-4
 		# avoid negative values
 		w[w<0] = 0
 		v[v<0] = 0
@@ -58,8 +58,8 @@ def advdif_AB3_2D(sink=True, save=False):
 
 	# Model parameters
 	# ----------------
-	Ly = 2000              # domain length along y
-	Lz = 60
+	Ly = 2000              # domain length along Y
+	Lz = 30                # domain length along Z
 	Us = 0.5               # amplitude of the advection velocity --> sert à quoi???
 	Kv = 1e-2              # vertical diffusion coefficient
 	Ks = 1e-1              # vertical diffusivity for the upper layer
@@ -73,13 +73,14 @@ def advdif_AB3_2D(sink=True, save=False):
 		wr   = - 0.00085   # rise velocity for HDPE (in regard to the Z axis) [m/s]
 		mode = 'float'
 
-	Ny = 2000               # number of elements along x (=> Nx+1 nodes)
-	Nz = 120                # number of elements along y (=> Ny+1 nodes)
+	Ny = 1000               # number of elements along x (=> Nx+1 nodes)
+	Nz = 30                 # number of elements along y (=> Ny+1 nodes)
 	Dy = Ly/Ny              # grid size along x
 	Dz = Lz/Nz              # grid size along y
 	T  = 3600               # integration time
 	dt = 0.5 * min([Dy/Us,(Dy**2)/(2*Kh),Dz/Us,(Dz**2)/(2*Kv)])
 	Nt = int(10*np.ceil(T/(10*dt)))  # number of timesteps
+	mass = []
 
 	print('-- AB3 2D --\n')
 	print('Time step = ' + str(round(dt,4)))
@@ -186,16 +187,41 @@ def advdif_AB3_2D(sink=True, save=False):
 		# Plot solution
 		if np.remainder(k, Nt/10) == 0:
 			snapshot = k*10//Nt
+			mass.append(ArrSum(C))
 			print(str(snapshot) + '\t    ' + str(ArrSum(C)))
 			plt.figure(figsize=(8,3))
 			plt.contourf(y,-1*z,C, vmin=0, cmap='RdBu')
 			plt.colorbar()
+			plt.xlabel('Horizontal distance [m]')
+			plt.ylabel('Depth [m]')
+			ax.xaxis.set_label_position('top') 
+			if sink == False : plt.ylim(-6,0)
 			if save:
 				plt.savefig('./images_AB3_2D/'+str(snapshot) + mode +'.png', dpi=500)
 				plt.savefig('./images_AB3_2D/'+str(snapshot) + mode +'.svg', dpi=500, format='svg')
-				
+
 	tac = time.time()
 	tictac = tac-tic
 	print('Run time is ' + str(round(tictac/60,2)) +' minutes' )
+	return mass
 
-advdif_AB3_2D(sink=True, save=True)
+
+# Simulation for sinking plastic
+sink_mass  = advdif_AB3_2D(sink=True, save=True)
+
+# Simulation for floating plastic
+float_mass = advdif_AB3_2D(sink=False, save=True)
+
+# Investigate mass conservation 
+plt.figure()
+plt.plot(range(10), float_mass, '-o', label ='positive bouancy')
+plt.plot(range(10), sink_mass, '-o', label='negative bouancy')
+plt.xlabel('Time')
+plt.ylabel('Total concentration [g/m$^3$]')
+plt.legend(loc='best')
+plt.grid(linestyle=':')
+
+plt.tight_layout()
+plt.savefig('./image_AB3/mass_conservation' + '.svg', format='svg', dpi=500)
+plt.savefig('./image_AB3/mass_conservation' + '.png', format='png', dpi=500)
+plt.close()
