@@ -1,52 +1,51 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 def advdif_AB3_2D(sink=True, save=False):
 	''' Solves a 2D advection-diffusion equation
 		using an Adam-Bashforth 3rd order scheme
 		on the domain [0,L]x[0,L]
 
-		Based on the advection_diffusion_AB3.m script
+		Based on the "advection_diffusion_AB3.m" script
 		written by E.Hanert for the LBRTI2102 course
 	''' 
 
 	#########################
-	### Useful functions ###
+	### Useful functions ####
 	#########################
 
-	def get_grid(L, Nx, Nz):
+	def get_grid(Ly, Lz, Ny, Nz):
 		''' Creates the grid 
 			L     = domain length
-			Nx,Ny = Nbr of elements along the x/z axis
+			Nx,Nyz = Nbr of elements along the x/z axis
 		'''
-		x,y = np.meshgrid(np.linspace(0,L, Nx), np.linspace(0,L, Nz), indexing='ij')
-		return x,y
+		y,z = np.meshgrid(np.linspace(0,Ly, Ny), np.linspace(0,Lz, Nz), indexing='xy')
+		return y,z
 
-	def get_advection_velocity_Z(x,y,U0,H):
-		''' Computes the advection velocity on the XY plane using the hypothesis
+	def get_advection_velocity_Z(y,z,U0,H):
+		''' Computes the advection velocity using the hypothesis
 			that advection decreases linearly with depth Z
 		U0 = horinzontal velocity at the surface [m/s]
 		H  = depth [m]
 
 		Return a vector containing an advection velocity value for each node
 		'''
-
-		u = U0 - x/H
-		v = U0 -y/H
+		v = U0 - z/H
+		w = (U0 - z/H)*1e-2
 		# avoid negative values
-		u[u<0] = 0
+		w[w<0] = 0
 		v[v<0] = 0
 
-		return u,v
+		return v,w
 
-	def get_initial_conditions(y,z):
-		''' Computes the initial conditions
+	def get_initial_conditions(y,z,C0=1e-3):
+		''' Computes the initial conditions : Gaussian function
 			Plastic concentration is concentrated in the upper-left corner of the domain
 
 		Return the initial conditions 
 		'''
- 
-		Cinit = np.exp(-y**2 - z**2)
+		Cinit = np.exp(-y**2 - z**2)*C0
 		return Cinit
 
 	def ArrSum(array):
@@ -57,33 +56,28 @@ def advdif_AB3_2D(sink=True, save=False):
 		'''
 		return sum(map(sum,array))
 
-	def plot_solution(y,z,C):
-		plt.figure()
-		plt.contourf(y,-1*z,C)
-		#plt.colorbar(fig)
-		plt.show()
-
 	# Model parameters
 	# ----------------
-	L  = 300               # domain length along x and y
+	Ly = 2000              # domain length along y
+	Lz = 60
 	Us = 0.5               # amplitude of the advection velocity --> sert à quoi???
 	Kv = 1e-2              # vertical diffusion coefficient
+	Ks = 1e-1              # vertical diffusivity for the upper layer
 	Kh = 2                 # horinzontal diffusion coefficient
-	U0 = 1                 # Surface velocity (hyp)
-	w  = 1.e-4             # vertical velocity [m/s]
+	U0 = 0.5               # Surface velocity (hyp)
 
 	if sink==True:
-		wr = 0.00154       # sink velocity for PET (in regard to the Z axis) [m/s]
+		wr   = 0.00154     # sink velocity for PET  (in regard to the Z axis) [m/s]
 		mode = 'sink'
 	else:
-		wr = - 0.00085     # rise velocity for HDPE (in regard to the Z axis) [m/s]
+		wr   = - 0.00085   # rise velocity for HDPE (in regard to the Z axis) [m/s]
 		mode = 'float'
 
-	Ny = 150               # number of elements along x (=> Nx+1 nodes)
-	Nz = 150               # number of elements along y (=> Ny+1 nodes)
-	Dy = L/Ny              # grid size along x
-	Dz = L/Nz              # grid size along y
-	T  = 100               # integration time
+	Ny = 2000               # number of elements along x (=> Nx+1 nodes)
+	Nz = 120                # number of elements along y (=> Ny+1 nodes)
+	Dy = Ly/Ny              # grid size along x
+	Dz = Lz/Nz              # grid size along y
+	T  = 3600               # integration time
 	dt = 0.5 * min([Dy/Us,(Dy**2)/(2*Kh),Dz/Us,(Dz**2)/(2*Kv)])
 	Nt = int(10*np.ceil(T/(10*dt)))  # number of timesteps
 
@@ -91,32 +85,36 @@ def advdif_AB3_2D(sink=True, save=False):
 	print('Time step = ' + str(round(dt,4)))
 
 	# Initialization
-	y,z = get_grid(L, Ny, Nz)                    # grid nodes coordinates
-	v,w = get_advection_velocity_Z(y,z,U0, L)    # advection velocity for all nodes
-	C   = get_initial_conditions(y,z)            # initial condition
-	# print(v)
-	# #print(v[0])
-	# print('\n')
-	# print(w)
-	# print(w[0][1])
-	# print('\n')
-	# print(C)
+	y,z = get_grid(Ly, Lz, Ny, Nz)                # grid nodes coordinates
+	v,w = get_advection_velocity_Z(y,z,U0, Lz)    # advection velocity for all nodes
+	C   = get_initial_conditions(y,z)             # initial condition
 
-	# Plot initial condtion
+	# Plot & save initial condtion
 	plt.figure()
-	plt.contourf(y,-1*z,C)
+	plt.contourf(y,-1*z,C, cmap='RdBu')
 	plt.xlim(0,3)
 	plt.ylim(-3,0)
-	#plt.scatter(y,-1*z,C)
-	plt.savefig('./images_AB3_2D/0initial_cdt.png')
-	
+	plt.colorbar()
+	ax=plt.gca() ; ax.xaxis.tick_top()
+	plt.xlabel('Horizontal distance [m]')
+	plt.ylabel('Depth [m]')
+	ax.xaxis.set_label_position('top') 
 
-	# Integration of the equation
+	if save:
+		plt.savefig('./images_AB3_2D/0initial_cdt.png', dpi=500)
+		plt.savefig('./images_AB3_2D/0initial_cdt.svg', dpi=500, format='svg')
+	plt.close() 
+	
+	#####################################
+	###  Integration of the equation  ###
+	#####################################
+
 	# First solution for time step t, t-1 and t-2
 	r0  = np.zeros_like(C)
 	r1  = np.zeros_like(C)
 	r2  = np.zeros_like(C)
 
+	tic = time.time() 
 	# Loop in time
 	for k in range(1, Nt+1): #when k==0 -> initial cdt! 
 		# Update solution for t-1 and t-2
@@ -126,11 +124,13 @@ def advdif_AB3_2D(sink=True, save=False):
 		for i in range(Ny): 
 			# Loop in space (z)
 			for j in range(Nz):
-				Cij = C[j][i]   # first get depth (j) then get value on Y axis (i)
-				vij = v[j][i]   # advection velocity at a depth=j on Y axis
-				wij = w[j][i]   # advection velocity at a depth=j on Z axis
+				Cij = C[j][i]     # first get depth (j) then get value on Y axis (i)
+				vij = v[j][i]     # advection velocity at a depth=j on Y axis
+				wij = w[j][i]     # advection velocity at a depth=j on Z axis
 
-				# Values around Cij + boundary conditons : No flux in/out domain
+				# Values around Cij + boundary conditons : 
+				#   No flux in/out domain for bottom layer and right side
+				#   C = 0 for top layer and left side (avoid non-conservation mass issues)
 				if i > 0:
 					Cl = C[j][i-1] ; vl = v[j][i-1]  # left value
 				else:
@@ -151,30 +151,32 @@ def advdif_AB3_2D(sink=True, save=False):
 				else:
 					Cu = Cij ; wu = wij
 
-				# diffusion (centered)
+				# diffusion (centered)	 
 				dify_ij = Kh*(Cr-2*Cij+Cl)/(Dy*Dy)
-				difz_ij = Kv*(Cr-2*Cij+Cl)/(Dz*Dz)
+				## for the surface layer (H>=30m), diffusivity coefficient is more important
+				if j <= 30//Dz : 
+					difz_ij = Ks*(Cr-2*Cij+Cl)/(Dz*Dz)
+				else:
+					difz_ij = Kv*(Cr-2*Cij+Cl)/(Dz*Dz)
 
 				# advection (upwind)
+				## advection on Y is always >0
 				advy_ij = -(vij*Cij-vl*Cl)/Dy
 
 				if w[j][i]+wr >= 0:
-					advz_ij = -(wij*Cij-wd*Cd)/Dz - wr*(Cij-Cd)/Dz
+					advz_ij = -((wij*Cij-wd*Cd)/Dz + wr*(Cij-Cd)/Dz)
 				else:
-					advz_ij = -(wu*Cu-wij*Cij)/Dz - wr*(Cu-Cij)/Dz
+					advz_ij = -((wu*Cu-wij*Cij)/Dz + wr*(Cu-Cij)/Dz)
 
 				# compute solution at node i,j
 				r0[j][i] =  advy_ij + advz_ij + dify_ij + difz_ij 
 
 		# Update solutions
 		if k==1:    # FE 
-			#print('FE')
 			C = C + dt*r0
-		elif k==2:    # AB2
-			#print('AB2')
+		elif k==2:  # AB2
 			C = C + dt*((3/2)*r0 - (1/2)*r1)
-		else:    # AB3
-			#print('AB3')
+		else:       # AB3
 			C = C + dt*((23/12)*r0 - (16/12)*r1 + (5/12)*r2)
 
 		# Print information
@@ -184,11 +186,16 @@ def advdif_AB3_2D(sink=True, save=False):
 		# Plot solution
 		if np.remainder(k, Nt/10) == 0:
 			snapshot = k*10//Nt
-			print(str(snapshot) + '\t    ' + str(round(ArrSum(C),4)))
-			plt.figure()
-			plt.contourf(y,-1*z,C)
-			plt.savefig('./images_AB3_2D/'+str(snapshot)+'.png')
-			#plt.show()
+			print(str(snapshot) + '\t    ' + str(ArrSum(C)))
+			plt.figure(figsize=(8,3))
+			plt.contourf(y,-1*z,C, vmin=0, cmap='RdBu')
+			plt.colorbar()
+			if save:
+				plt.savefig('./images_AB3_2D/'+str(snapshot) + mode +'.png', dpi=500)
+				plt.savefig('./images_AB3_2D/'+str(snapshot) + mode +'.svg', dpi=500, format='svg')
+				
+	tac = time.time()
+	tictac = tac-tic
+	print('Run time is ' + str(round(tictac/60,2)) +' minutes' )
 
-
-advdif_AB3_2D(sink=True)
+advdif_AB3_2D(sink=True, save=True)

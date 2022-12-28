@@ -121,10 +121,10 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
 
 
 # Simulation for negative buoyancy plastic
-float_mass = upwind_adveciton_diffusion_AB3(sink=True, save=True)
+float_mass = upwind_adveciton_diffusion_AB3(sink=True, save=False)
 
 # Simulation for positive buoyancy plastic
-sink_mass = upwind_adveciton_diffusion_AB3(sink=False, save=True)
+sink_mass = upwind_adveciton_diffusion_AB3(sink=False, save=False)
 
 
 # Investigate mass conservation 
