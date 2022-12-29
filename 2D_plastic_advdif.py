@@ -189,11 +189,13 @@ def advdif_AB3_2D(sink=True, save=False):
 			snapshot = k*10//Nt
 			mass.append(ArrSum(C))
 			print(str(snapshot) + '\t    ' + str(ArrSum(C)))
-			plt.figure(figsize=(8,3))
+			plt.figure(figsize=(8,4))
 			plt.contourf(y,-1*z,C, vmin=0, cmap='RdBu')
 			plt.colorbar()
 			plt.xlabel('Horizontal distance [m]')
 			plt.ylabel('Depth [m]')
+			ax=plt.gca() 
+			ax.xaxis.tick_top()
 			ax.xaxis.set_label_position('top') 
 			if sink == False : plt.ylim(-6,0)
 			if save:
@@ -222,6 +224,6 @@ plt.legend(loc='best')
 plt.grid(linestyle=':')
 
 plt.tight_layout()
-plt.savefig('./image_AB3/mass_conservation' + '.svg', format='svg', dpi=500)
-plt.savefig('./image_AB3/mass_conservation' + '.png', format='png', dpi=500)
+plt.savefig('./image_AB3_2D/mass_conservation' + '.svg', format='svg', dpi=500)
+plt.savefig('./image_AB3_2D/mass_conservation' + '.png', format='png', dpi=500)
 plt.close()
