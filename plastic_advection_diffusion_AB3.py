@@ -75,26 +75,23 @@ def upwind_adveciton_diffusion_AB3(sink=True, save=False):
                 if w + wr >= 0 :
                     r0[i] = (Ks/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
                 else:
-                    #print(3)
                     r0[i] = (Ks/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
 
             else:
-                #print(2)
                 if w + wr >= 0 :
                     r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i]-C[i-1]) - (wr/dz)*(C[i]-C[i-1])
                 else:
-                    #print(3)
                     r0[i] = (K/(dz**2))*(C[i+1]-2*C[i]+C[i-1]) - (w/dz)*(C[i+1]-C[i]) - (wr/dz)*(C[i+1]-C[i])
 
         # Update C
         if k==1:    # Forward Euler
             C = C + dt*r0
-        elif k==2:
+        elif k==2:  # AB2
             C = C + dt*((3/2)*r0 - (1/2)*r1)
-        else:
+        else:       # AB3
             C = C + dt*((23/12)*r0 - (16/12)*r1 + (5/12)*r2)
 
-        # Boundary condtition : no flux in/out domain
+        # Boundary condtition
         C[0]  = 0 
         C[-1] = C[-2]
         # Plot the solution

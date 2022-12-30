@@ -45,8 +45,8 @@ def advdiff_fipy_2D(sink=True, save=False):
     meshBnd0   = mesh.facesLeft  | mesh.facesTop
     meshBnd    = mesh.facesRight | mesh.facesBottom 
     meshAllBnd = mesh.facesLeft  | mesh.facesTop | mesh.facesRight | mesh.facesBottom 
-    phi.faceGrad.constrain(0, meshBnd)         # impose zero flux on bottom and right boundaries 
-    phi.constrain(0, meshBnd0)                 # impose value = 0 on top and left boundaries 
+    phi.faceGrad.constrain(0, meshBnd)          # impose zero flux on bottom and right boundaries 
+    phi.constrain(0, meshBnd0)                  # impose value = 0 on top and left boundaries 
 
     # Define the equation
     eq = TransientTerm() == DiffusionTerm(coeff=D) \

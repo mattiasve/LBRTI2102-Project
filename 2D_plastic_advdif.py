@@ -60,7 +60,7 @@ def advdif_AB3_2D(sink=True, save=False):
 	# ----------------
 	Ly = 2000              # domain length along Y
 	Lz = 30                # domain length along Z
-	Us = 0.5               # amplitude of the advection velocity --> sert à quoi???
+	Us = 0.5               # amplitude of the advection velocity (?)
 	Kv = 1e-2              # vertical diffusion coefficient
 	Ks = 1e-1              # vertical diffusivity for the upper layer
 	Kh = 2                 # horinzontal diffusion coefficient
@@ -73,10 +73,10 @@ def advdif_AB3_2D(sink=True, save=False):
 		wr   = - 0.00085   # rise velocity for HDPE (in regard to the Z axis) [m/s]
 		mode = 'float'
 
-	Ny = 1000               # number of elements along x (=> Nx+1 nodes)
-	Nz = 30                 # number of elements along y (=> Ny+1 nodes)
-	Dy = Ly/Ny              # grid size along x
-	Dz = Lz/Nz              # grid size along y
+	Ny = 1000               # number of elements along y 
+	Nz = 30                 # number of elements along z 
+	Dy = Ly/Ny              # grid size along y
+	Dz = Lz/Nz              # grid size along z
 	T  = 3600               # integration time
 	dt = 0.5 * min([Dy/Us,(Dy**2)/(2*Kh),Dz/Us,(Dz**2)/(2*Kv)])
 	Nt = int(10*np.ceil(T/(10*dt)))  # number of timesteps
@@ -117,7 +117,7 @@ def advdif_AB3_2D(sink=True, save=False):
 
 	tic = time.time() 
 	# Loop in time
-	for k in range(1, Nt+1): #when k==0 -> initial cdt! 
+	for k in range(1, Nt+1): 
 		# Update solution for t-1 and t-2
 		r2=r1 ; r1=r0
 
