@@ -16,13 +16,13 @@ def advdiff_fipy_2D(sink=True, save=False):
     mass = []
 
     # Model parameters
-    Ly, Lz = 30, 5
-    Ny, Nz = 300, 50
+    Ly, Lz = 10, 3
+    Ny, Nz = 100, 30
     dy, dz = Ly/Ny, Lz/Nz
-    v      = 0.1 
+    v      = 0.25 
     w      = 0.01
     u      = (v,w)
-    D      = (2, 0.1)
+    D      = 0.1 #(2, 0.1)
 
     if sink:
         wr   = (0, 0.00154)
@@ -31,8 +31,8 @@ def advdiff_fipy_2D(sink=True, save=False):
         wr   = (0, - 0.00085)
         mode = 'float'
 
-    T  = 100
-    dt = T/10000
+    T  = 10
+    dt = T/1000
     Np = 10                                     # Number of snapshots of the solution (one every Nt/Np time steps)
     Nt = Np*np.ceil(T/(Np*dt)).astype('int')    # Nt must be an integer divisible by Np
 
@@ -101,8 +101,8 @@ mass_float = advdiff_fipy_2D(sink=False, save=True)
 
 # Investigate mass conservation 
 plt.figure()
-plt.plot(range(10), mass_sink, '-o', label ='positive bouancy')
-plt.plot(range(10), mass_float, '-.o', label='negative bouancy')
+plt.plot(range(10), mass_sink, '--', marker='2', label ='positive bouancy')
+plt.plot(range(10), mass_float, '-.', marker='1', label='negative bouancy')
 plt.xlabel('Time')
 plt.ylabel('Total concentration [g/m$^3$]')
 plt.legend(loc='best')
